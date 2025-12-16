@@ -121,6 +121,8 @@ def build_forecast():
     ]
 
     all_data = pd.concat([historical, forecast], ignore_index=True)
+    all_data = all_data.replace([np.inf, -np.inf], np.nan)
+    all_data = all_data.fillna(0)
 
     return {
         "metadatos": {
