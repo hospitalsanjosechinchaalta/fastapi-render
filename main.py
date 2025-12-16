@@ -10,9 +10,15 @@ from sklearn.metrics import mean_absolute_error
 from xgboost import XGBRegressor
 from fastapi.responses import JSONResponse
 from fastapi import Query
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Pronóstico de Dengue – Chincha")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # =========================
 # MODEL INITIALIZATION
 # =========================
