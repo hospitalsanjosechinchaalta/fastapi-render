@@ -8,6 +8,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import mean_absolute_error
 from xgboost import XGBRegressor
+from fastapi.responses import JSONResponse
+from fastapi import Query
 
 app = FastAPI(title="Pronóstico de Dengue – Chincha")
 
@@ -142,13 +144,34 @@ def build_forecast():
 # =========================
 @app.on_event("startup")
 def load_model():
-    global RESULT_JSON
-    RESULT_JSON = build_forecast()
+    global FORECAST_DF, METADATA
+    result = build_forecast()
+    METADATA = result["metadatos"]
+    FORECAST_DF = pd.DataFrame(result["datos"])
 
 
 # =========================
 # API ENDPOINT
 # =========================
 @app.get("/forecast")
-def get_forecast():
-    return RESULT_JSON
+def get_forecast(
+    anio: int | None = Query(None, description="Año del pronóstico"),
+    distrito: str | None = Query(None, description="Nombre del distrito")
+):
+    df = FORECAST_DF.copy()
+
+    if anio is not None:
+        df = df[df["año"] == anio]
+
+    if distrito is not None:
+        df = df[df["distrito"].str.lower() == distrito.lower()]
+
+    return {
+        "metadatos": METADATA,
+        "filtros": {
+            "anio": anio,
+            "distrito": distrito
+        },
+        "total_registros": len(df),
+        "datos": df.to_dict(orient="records")
+    }
